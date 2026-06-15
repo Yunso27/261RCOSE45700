@@ -69,3 +69,14 @@ try {
 } catch {
     throw "jobs list returned invalid JSON: $($_.Exception.Message)"
 }
+
+$throwawayJobId = "deployment-route-check-" + [guid]::NewGuid().ToString("N")
+$deleteResponse = Read-Url -Url (Join-Url $BaseUrl "api/jobs/$throwawayJobId") -Method "DELETE"
+$deleteStatus = Get-StatusCode $deleteResponse
+if (@(204, 404) -contains $deleteStatus) {
+    Write-Host "[ok] job deletion route exists -> HTTP $deleteStatus"
+} elseif ($deleteStatus -eq 405) {
+    throw "job deletion route is not deployed: HTTP 405 Method Not Allowed"
+} else {
+    throw "unexpected job deletion route response: HTTP $deleteStatus"
+}
