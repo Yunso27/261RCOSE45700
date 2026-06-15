@@ -56,3 +56,16 @@ Assert-Status -Name "frontend root" -Response $root -Expected @(200)
 $health = Read-Url -Url (Join-Url $BaseUrl "health")
 Assert-Status -Name "backend health" -Response $health -Expected @(200)
 Write-Host "     health body: $($health.Content)"
+
+$jobs = Read-Url -Url (Join-Url $BaseUrl "api/jobs")
+Assert-Status -Name "jobs list" -Response $jobs -Expected @(200)
+
+try {
+    $jobsJson = $jobs.Content | ConvertFrom-Json
+    if ($jobsJson -isnot [array]) {
+        throw "jobs response is not an array"
+    }
+    Write-Host "[ok] jobs response is a JSON array ($($jobsJson.Count) item(s))"
+} catch {
+    throw "jobs list returned invalid JSON: $($_.Exception.Message)"
+}
