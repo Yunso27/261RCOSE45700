@@ -50,3 +50,9 @@ function Assert-Status {
 
 Write-Host "Checking SafeVlog3 deployment at $BaseUrl"
 
+$root = Read-Url -Url $BaseUrl
+Assert-Status -Name "frontend root" -Response $root -Expected @(200)
+
+$health = Read-Url -Url (Join-Url $BaseUrl "health")
+Assert-Status -Name "backend health" -Response $health -Expected @(200)
+Write-Host "     health body: $($health.Content)"
