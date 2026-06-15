@@ -74,3 +74,16 @@ Invoke-WebRequest `
 - HTTP 405: 삭제 라우트가 아직 배포되지 않았거나 백엔드가 이전 버전임
 
 현재 구현에서는 존재하지 않는 작업 ID에 대해 내부 store 생성 흐름을 거친 뒤 204가 반환될 수 있다. 이 확인은 라우트 존재 여부만 보기 위한 smoke check이며 실제 작업 ID에는 사용하지 않는다.
+
+### 5. 프론트엔드 삭제 UI 반영 확인
+
+프론트엔드 index HTML에서 JS 번들 경로를 확인한다.
+
+```powershell
+$html = (Invoke-WebRequest -Uri "http://ec2-100-48-61-106.compute-1.amazonaws.com/" -UseBasicParsing).Content
+$asset = [regex]::Match($html, 'src="([^"]*index-[^"]*\.js)"').Groups[1].Value
+$bundle = (Invoke-WebRequest -Uri "http://ec2-100-48-61-106.compute-1.amazonaws.com$asset" -UseBasicParsing).Content
+$bundle.Contains('delete(`/api/jobs/')
+```
+
+`True`이면 작업 삭제 API 호출이 프론트엔드 번들에 포함된 것이다. `False`이면 백엔드는 최신이어도 프론트엔드가 이전 빌드일 수 있으므로 `npm run build` 후 nginx 정적 파일 경로에 다시 배포해야 한다.
