@@ -16,3 +16,29 @@ http://ec2-100-48-61-106.compute-1.amazonaws.com
 - `DELETE /api/jobs/{job_id}` 라우트가 배포되어 있는지 확인
 - 프론트엔드 번들에 작업 삭제 UI/API 호출이 포함됐는지 확인
 
+## 수동 확인
+
+### 1. 프론트엔드 응답
+
+```powershell
+Invoke-WebRequest -Uri "http://ec2-100-48-61-106.compute-1.amazonaws.com/" -UseBasicParsing
+```
+
+기대 결과:
+
+- HTTP 200
+- HTML 안에 `/assets/index-*.js`와 `/assets/index-*.css`가 포함됨
+
+### 2. 백엔드 헬스체크
+
+```powershell
+Invoke-WebRequest -Uri "http://ec2-100-48-61-106.compute-1.amazonaws.com/health" -UseBasicParsing
+```
+
+기대 결과:
+
+```json
+{"status":"ok","sam3":"loaded","sam3_error":null}
+```
+
+`sam3` 값은 서버 환경에 따라 `loaded`가 아닐 수 있지만, API 자체는 HTTP 200으로 응답해야 한다.
