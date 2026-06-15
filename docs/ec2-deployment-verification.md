@@ -42,3 +42,17 @@ Invoke-WebRequest -Uri "http://ec2-100-48-61-106.compute-1.amazonaws.com/health"
 ```
 
 `sam3` 값은 서버 환경에 따라 `loaded`가 아닐 수 있지만, API 자체는 HTTP 200으로 응답해야 한다.
+
+### 3. 작업 목록 API
+
+```powershell
+Invoke-WebRequest -Uri "http://ec2-100-48-61-106.compute-1.amazonaws.com/api/jobs" -UseBasicParsing
+```
+
+기대 결과:
+
+- HTTP 200
+- JSON 배열 응답
+- 기존 작업이 있다면 `job_id`, `status`, `scene_type`, `face_count`, `pii_count` 필드 확인 가능
+
+작업 목록이 서버 재시작 이후에도 유지된다면 DB 기반 저장소가 동작하고 있다는 강한 신호다.
