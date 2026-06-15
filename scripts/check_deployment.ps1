@@ -80,3 +80,30 @@ if (@(204, 404) -contains $deleteStatus) {
 } else {
     throw "unexpected job deletion route response: HTTP $deleteStatus"
 }
+
+$assetMatch = [regex]::Match($root.Content, 'src="([^"]*index-[^"]*\.js)"')
+if (-not $assetMatch.Success) {
+    throw "could not find frontend JS bundle in root HTML"
+}
+
+$bundlePath = $assetMatch.Groups[1].Value
+$bundle = Read-Url -Url (Join-Url $BaseUrl $bundlePath)
+Assert-Status -Name "frontend bundle" -Response $bundle -Expected @(200)
+
+$hasJobDeleteCall = (
+    $bundle.Content.Contains('delete(`/api/jobs/') -or
+    $bundle.Content.Contains('delete("/api/jobs/') -or
+    $bundle.Content.Contains(".delete(`/api/jobs/") -or
+    $bundle.Content.Contains(".delete(""/api/jobs/")
+)
+
+if ($hasJobDeleteCall) {
+    Write-Host "[ok] frontend bundle includes job deletion API call"
+} elseif ($StrictFrontend) {
+    throw "frontend bundle does not include job deletion API call"
+} else {
+    Write-Host "[warn] frontend bundle does not include job deletion API call"
+    Write-Host "       Backend may be newer than the deployed frontend build."
+}
+
+Write-Host "Deployment smoke check completed."

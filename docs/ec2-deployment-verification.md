@@ -87,3 +87,45 @@ $bundle.Contains('delete(`/api/jobs/')
 ```
 
 `True`이면 작업 삭제 API 호출이 프론트엔드 번들에 포함된 것이다. `False`이면 백엔드는 최신이어도 프론트엔드가 이전 빌드일 수 있으므로 `npm run build` 후 nginx 정적 파일 경로에 다시 배포해야 한다.
+
+## 자동 smoke check
+
+저장소 루트에서 다음 명령을 실행한다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/check_deployment.ps1 `
+  -BaseUrl "http://ec2-100-48-61-106.compute-1.amazonaws.com"
+```
+
+스크립트는 다음을 확인한다.
+
+- `/` HTML 200 응답
+- `/health` 200 응답
+- `/api/jobs` 200 응답 및 JSON 배열 형식
+- `DELETE /api/jobs/{throwaway-id}` 라우트 존재 여부
+- 프론트엔드 번들에 작업 삭제 호출이 포함됐는지 여부
+
+프론트엔드 삭제 호출 확인은 경고로만 처리한다. 백엔드 API가 먼저 배포되고 프론트엔드 정적 파일이 아직 갱신되지 않은 상태를 구분하기 위해서다.
+
+## 배포 후 체크리스트
+
+- [ ] EC2 security group에서 80 포트가 열려 있음
+- [ ] nginx가 최신 `frontend/dist`를 서빙함
+- [ ] FastAPI 프로세스가 최신 커밋으로 재시작됨
+- [ ] `.env`의 `UPLOAD_DIR`, `OUTPUT_DIR`, `SAM3_CHECKPOINT` 경로가 EC2 파일 시스템과 일치함
+- [ ] DB 적용 버전에서는 `DATABASE_URL`이 올바른 PostgreSQL 접속 문자열을 가리킴
+- [ ] `/health`가 200으로 응답함
+- [ ] `/api/jobs`가 JSON 배열로 응답함
+- [ ] 작업 삭제 API가 204 또는 404로 응답함
+- [ ] 프론트엔드 번들에 작업 삭제 UI/API 호출이 포함됨
+
+## PR에 남길 검증 예시
+
+```md
+## Deployment verification
+- Checked EC2 root page: 200 OK
+- Checked `/health`: 200 OK
+- Checked `/api/jobs`: 200 OK, JSON array
+- Checked `DELETE /api/jobs/{throwaway-id}`: route is deployed
+- Checked frontend bundle for job deletion call: pending frontend rebuild
+```
