@@ -56,3 +56,21 @@ Invoke-WebRequest -Uri "http://ec2-100-48-61-106.compute-1.amazonaws.com/api/job
 - 기존 작업이 있다면 `job_id`, `status`, `scene_type`, `face_count`, `pii_count` 필드 확인 가능
 
 작업 목록이 서버 재시작 이후에도 유지된다면 DB 기반 저장소가 동작하고 있다는 강한 신호다.
+
+### 4. 작업 삭제 라우트 확인
+
+실제 사용자 작업을 삭제하지 않도록, 존재하지 않는 임의 ID로만 확인한다.
+
+```powershell
+Invoke-WebRequest `
+  -Uri "http://ec2-100-48-61-106.compute-1.amazonaws.com/api/jobs/deployment-route-check" `
+  -Method Delete `
+  -UseBasicParsing
+```
+
+기대 결과:
+
+- HTTP 204 또는 404: 삭제 라우트가 배포되어 있음
+- HTTP 405: 삭제 라우트가 아직 배포되지 않았거나 백엔드가 이전 버전임
+
+현재 구현에서는 존재하지 않는 작업 ID에 대해 내부 store 생성 흐름을 거친 뒤 204가 반환될 수 있다. 이 확인은 라우트 존재 여부만 보기 위한 smoke check이며 실제 작업 ID에는 사용하지 않는다.
